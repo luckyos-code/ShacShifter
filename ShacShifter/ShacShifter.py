@@ -39,6 +39,6 @@ class ShacShifter:
         self.logger.debug('Start Shifting from {} into {}'.format(input, output))
         parser = BibLaTeXDefParser()
         parseResult = parser.parseDef(input)
-        print(parseResult)
+        
         # writer = SHACLSerializer(parseResult, output)
         # writer.write()
