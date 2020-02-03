@@ -29,6 +29,7 @@ def main(args=None):
     parser.add_argument('-se', '--sparqlEndpoint', type=str, help="The Sparql Endpoint")
     parser.add_argument('-ri', '--resourceIRI', type=str, help="The resource IRI")
     parser.add_argument('-ng', '--namedGraph', type=str, help="The named Graph")
+    parser.add_argument('-b', '--biblatex', type=str, help="(WIP) The input BibLaTeX DEF file")
 
     args = parser.parse_args()
 
@@ -53,5 +54,8 @@ def main(args=None):
     logger.debug('Logger initialized')
 
     shifter = ShacShifter()
-    shifter.shift(args.shacl, args.output, args.format, args.sparqlEndpoint,
-                  args.resourceIRI, args.namedGraph)
+    if args.biblatex:
+        shifter.shiftex(args.biblatex, args.output)
+    else:
+        shifter.shift(args.shacl, args.output, args.format, args.sparqlEndpoint,
+                      args.resourceIRI, args.namedGraph)

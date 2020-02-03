@@ -8,6 +8,7 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(os.path.realpath
 from ShacShifter.HTMLSerializer import HTMLSerializer
 from ShacShifter.RDFormsSerializer import RDFormsSerializer
 from ShacShifter.ShapeParser import ShapeParser
+from ShacShifter.BibLaTeXDefParser import BibLaTeXDefParser
 import logging
 
 
@@ -31,3 +32,13 @@ class ShacShifter:
             writer.write()
         else:
             writer = None
+
+    # def __init__(self):
+    def shiftex(self, input, output):
+        """Transform biblatex def to shacl."""
+        self.logger.debug('Start Shifting from {} into {}'.format(input, output))
+        parser = BibLaTeXDefParser()
+        parseResult = parser.parseDef(input)
+        print(parseResult)
+        # writer = SHACLSerializer(parseResult, output)
+        # writer.write()
