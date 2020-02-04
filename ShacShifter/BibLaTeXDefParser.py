@@ -27,20 +27,47 @@ class BibLaTeXDefParser:
                 pass
 
             if reg_match.entryTypes:
-                # print(reg_match.entryTypes)
+                for declaration in reg_match.entryTypes:
+                    if declaration[0] == '':
+                        for entry in [element.strip('\n ') for element in declaration[1].split(',')]:
+                            self.entryTypes[entry] = {'skipout': False, 'fields': set()}
+                    if declaration[0] == '[skipout]':
+                        for entry in [element.strip('\n ') for element in declaration[1].split(',')]:
+                            self.entryTypes[entry] = {'skipout': True, 'fields': set()}
 
             if reg_match.fields:
-                # print(reg_match.fields)
+                # missing options: format, nullok, skipout, label
+                fields = set()
+                for declaration in reg_match.fields:
+                    options = [element.split('=') for element in declaration[0].strip('[]').split(', ')]
+                    for entry in [element.strip() for element in declaration[1].split(',')]:
+                        for option in options:
+                            if option[0] == 'type':
+                                fieldType = option[1]
+                            if option[0] == 'datatype':
+                                dataType = option[1]
+                        self.fields[entry] = {'type': fieldType, 'datatype': dataType}
 
             if reg_match.entryFields:
-                # print(reg_match.entryFields)
+                for declaration in reg_match.entryFields:
+                    if declaration[0] == '':
+                        fields = [element.strip('\n ') for element in declaration[1].split(',')]
+                        for key, value in self.entryTypes.items():
+                            value['fields'].update(fields)
+                    else:
+                        types = declaration[0].strip('[]').split(',')
+                        fields = [element.strip('\n ') for element in declaration[1].split(',')]
+                        for key in types:
+                            self.entryTypes[key]['fields'].update(fields)
 
             if reg_match.multiscriptEntryFields:
                 # print(reg_match.multiscriptEntryFields)
+                pass
 
             if reg_match.constraints:
                 # print(reg_match.constraints)
                 # print(re.findall('(.*?)', reg_match.constraints[0]))
+                pass
 
             if False:
                 value_type = reg_match.name_score.group(1)
@@ -70,7 +97,7 @@ class _RegExLib:
         r'\\DeclareDatamodelEntrytypes(\[.*?\])?{(.*?)}', re.DOTALL | re.MULTILINE
     )
     _reg_fields = re.compile(
-        r'\\DeclareDatamodelFields(\[.*?\])?{(.*?)}\n\n', re.DOTALL | re.MULTILINE
+        r'\\DeclareDatamodelFields(\[.*?\])?{(.*?)}', re.DOTALL | re.MULTILINE
     )
     _reg_entryFields = re.compile(
         r'\\DeclareDatamodelEntryfields(\[.*?\])?{(.*?)}', re.DOTALL | re.MULTILINE
