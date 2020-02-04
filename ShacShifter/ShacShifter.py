@@ -34,7 +34,7 @@ class ShacShifter:
             writer = None
 
     # def __init__(self):
-    def shiftex(self, input, output):
+    def shiftex(self, input, output, mapping):
         """Transform biblatex def to shacl."""
         self.logger.debug('Start Shifting from {} into {}'.format(input, output))
         parser = BibLaTeXDefParser()
