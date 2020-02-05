@@ -28,7 +28,6 @@ class BibLaTeXDefParser:
                 pass
 
             if reg_match.entryTypes:
-                print(len(reg_match.entryTypes))
                 for declaration in reg_match.entryTypes:
                     if declaration[0] == '':
                         for entry in [element.strip('\n') for element in declaration[1].split(',')]:
@@ -38,7 +37,6 @@ class BibLaTeXDefParser:
                             self.entryTypes[entry] = EntryType(name=entry, skipout=True)
 
             if reg_match.fields:
-                print(len(reg_match.fields))
                 # missing options: format, nullok, skipout, label
                 for declaration in reg_match.fields:
                     options = [element.split('=') for element in declaration[0].strip('[]').split(',')]
@@ -51,7 +49,6 @@ class BibLaTeXDefParser:
                         fieldsDict[entry] = Field(name=entry, type=fieldType, dataType=dataType)
 
             if reg_match.entryFields:
-                print(len(reg_match.entryFields))
                 for declaration in reg_match.entryFields:
                     if declaration[0] == '':
                         # for all entryTypes
@@ -78,7 +75,6 @@ class BibLaTeXDefParser:
                             self.entryTypes[key].fields.extend(fields)
 
             if reg_match.multiscriptEntryFields:
-                print(len(reg_match.multiscriptEntryFields))
                 # not (yet) relevant
                 for declaration in reg_match.multiscriptEntryFields:
                     if declaration[0] == '':
@@ -93,31 +89,20 @@ class BibLaTeXDefParser:
                             pass
 
             if reg_match.constraints:
-                regConstraint = r'\\constraint(\[.*?\]){(.*?)^}'
-
+                # TODO also get fields after xor and or fields, problem: '^}' not safe
                 for declaration in reg_match.constraints:
-                    if declaration[0] == '':
-                        # for all entryTypes (add to fields dict)
-                        constraints = re.findall(regConstraint, declaration[1], re.DOTALL | re.MULTILINE)
-                        if constraints:
-                            self.parseConstraints(constraints, types=False)
-                    else:
-                        # for specific entryTypes (add to entryType dict)
-                        types = declaration[0].strip('[]').split(',')
-                        constraints = re.findall(regConstraint, declaration[1], re.DOTALL | re.MULTILINE)
-                        if constraints:
-                            self.parseConstraints(constraints, types)
-
+                    constraints = list(filter(None, declaration[1].replace('\n','').split('\\constraint[')))
+                    constraints = [element.split(']') for element in constraints]
+                    types = [element.strip('\n') for element in declaration[0].strip('[]').split(',')]
+                    self.parseConstraints(constraints, types)
         return self.entryTypes
 
-    def parseConstraints(self, constraints, types=False):
-        regOR = r''
-        regXOR = r''
+    def parseConstraints(self, constraints, types):
         regField = r'\\constraintfield{(.*?)}'
 
         for constraint in constraints:
             options = [element.split('=') for element in constraint[0].strip('[]').split(',')]
-            constraint = constraint[1].strip('\n')
+            constraint = constraint[1][1:-1]
             dataType = rangemin = rangemax = pattern = False
             for option in options:
                 if option[0] == 'type':
@@ -131,13 +116,63 @@ class BibLaTeXDefParser:
                 if option[0] == 'pattern':
                     pattern = option[1]
             if constraintType == 'mandatory':
-                # all mandatory
-                # or
-                # xor
-                pass
+                constraintFields = []
+                if '\\constraintfieldsor' in constraint or '\\constraintfieldsxor' in constraint:
+                    # or and xor
+                    orCon = False
+                    if '\\constraintfieldsor'in constraint:
+                        orCon = True
+                        parts = list(filter(None, constraint.split('\\constraintfieldsor{')))
+                    else:
+                        parts = list(filter(None, constraint.split('\\constraintfieldsxor{')))
+                    for part in parts:
+                        if '}}' in part:
+                            arr = part.split('}}')
+                            arr[0] += '}'
+                            orFields = re.findall(regField, arr[0], re.DOTALL | re.MULTILINE)
+                            # add or/xor flag
+                            if types != ['']:
+                                # for specific entryTypes
+                                for key in types:
+                                    for num, field in enumerate(self.entryTypes[key].fields):
+                                        if field.name in orFields:
+                                            if orCon:
+                                                self.entryTypes[key].fields[num].orConstraint = True
+                                            else:
+                                                self.entryTypes[key].fields[num].xorConstraint = True
+                            else:
+                                # for all entryTypes
+                                for key, value in self.entryTypes.items():
+                                    for num, field in enumerate(self.entryTypes[key].fields):
+                                        if field.name in orFields:
+                                            if orCon:
+                                                self.entryTypes[key].fields[num].orConstraint = True
+                                            else:
+                                                self.entryTypes[key].fields[num].xorConstraint = True
+                            constraintFields.extend(orFields)
+                            constraintFields.extend(re.findall(regField, arr[1], re.DOTALL | re.MULTILINE))
+                        else:
+                            constraintFields.extend(re.findall(regField, part, re.DOTALL | re.MULTILINE))
+                else:
+                    # only get fields
+                    constraintFields.extend(re.findall(regField, constraint, re.DOTALL | re.MULTILINE))
+                # add mandatory flag
+                if types != ['']:
+                    # for specific entryTypes
+                    for key in types:
+                        for num, field in enumerate(self.entryTypes[key].fields):
+                            if field.name in constraintFields:
+                                self.entryTypes[key].fields[num].mandatory = True
+                else:
+                    # for all entryTypes
+                    for key, value in self.entryTypes.items():
+                        for num, field in enumerate(self.entryTypes[key].fields):
+                            if field.name in constraintFields:
+                                self.entryTypes[key].fields[num].mandatory = True
             elif constraintType == 'data':
                 constraintFields = re.findall(regField, constraint, re.DOTALL | re.MULTILINE)
-                if types:
+                if types != ['']:
+                    # for specific entryTypes
                     for key in types:
                         for num, field in enumerate(self.entryTypes[key].fields):
                             if field.name in constraintFields:
@@ -148,17 +183,16 @@ class BibLaTeXDefParser:
                                     'pattern': pattern
                                 }
                 else:
+                    # for all entryTypes
                     for key, value in self.entryTypes.items():
                         for num, field in enumerate(self.entryTypes[key].fields):
                             if field.name in constraintFields:
-                                print(constraintFields)
                                 self.entryTypes[key].fields[num].contraints = {
                                     'dataype': dataType,
                                     'rangemin': rangemin,
                                     'rangemax': rangemax,
                                     'pattern': pattern
                                 }
-                                #print(self.entryTypes[key].fields[num])
             elif constraintType == 'conditional':
                 pass
 
