@@ -55,8 +55,8 @@ def main(args=None):
     logger.debug('Logger initialized')
 
     shifter = ShacShifter()
-    if args.biblatex or args.mapping:
-        shifter.shiftex(args.biblatex, args.output, args.mapping, args.resourceIRI)
+    if args.biblatex and args.mapping:
+        shifter.shiftex(args.biblatex, args.output, args.mapping)
     else:
         shifter.shift(args.shacl, args.output, args.format, args.sparqlEndpoint,
                       args.resourceIRI, args.namedGraph)
