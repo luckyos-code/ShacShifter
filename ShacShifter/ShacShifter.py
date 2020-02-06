@@ -7,6 +7,7 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(os.path.realpath
 
 from ShacShifter.HTMLSerializer import HTMLSerializer
 from ShacShifter.RDFormsSerializer import RDFormsSerializer
+from ShacShifter.ShapeSerializer import ShapeSerializer
 from ShacShifter.ShapeParser import ShapeParser
 from ShacShifter.BibLaTeXDefParser import BibLaTeXDefParser
 import logging
@@ -40,5 +41,5 @@ class ShacShifter:
         parser = BibLaTeXDefParser()
         parseResult = parser.parseDef(input)
         
-        # writer = SHACLSerializer(parseResult, output)
-        # writer.write()
+        writer = ShapeSerializer(parseResult, mapping, output)
+        writer.write()

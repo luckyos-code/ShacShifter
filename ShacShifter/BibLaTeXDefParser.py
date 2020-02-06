@@ -24,7 +24,7 @@ class BibLaTeXDefParser:
             fieldsDict = {}
             
             if reg_match.constants:
-                # not (yet) relevant
+                # TODO not (yet) relevant
                 pass
 
             if reg_match.entryTypes:
@@ -75,7 +75,7 @@ class BibLaTeXDefParser:
                             self.entryTypes[key].fields.extend(fields)
 
             if reg_match.multiscriptEntryFields:
-                # not (yet) relevant
+                # TODO not (yet) relevant
                 for declaration in reg_match.multiscriptEntryFields:
                     if declaration[0] == '':
                         # for all entryTypes
@@ -89,7 +89,6 @@ class BibLaTeXDefParser:
                             pass
 
             if reg_match.constraints:
-                # TODO also get fields after xor and or fields, problem: '^}' not safe
                 for declaration in reg_match.constraints:
                     constraints = list(filter(None, declaration[1].replace('\n','').split('\\constraint[')))
                     constraints = [element.split(']') for element in constraints]
@@ -194,9 +193,11 @@ class BibLaTeXDefParser:
                                     'pattern': pattern
                                 }
             elif constraintType == 'conditional':
+                # TODO
                 pass
 
 class EntryType:
+    """The EntryType class."""
     def __init__(self, name, skipout):
         self.name = name
         self.skipout = skipout
@@ -206,6 +207,7 @@ class EntryType:
         return 'name={}, skipout={}, fields={}'.format(self.name, self.skipout, [field.name for field in self.fields])
 
 class Field:
+    """The Field class."""
     def __init__(self, name, type=False, dataType=False):
         self.name = name
         self.type = type
@@ -227,7 +229,7 @@ class Field:
         )
 
 class _RegExLib:
-    """Set up regular expressions"""
+    """Set up some regular expressions."""
     # use https://regexper.com to visualise these if required
     _reg_constants = re.compile(
         r'\\DeclareDatamodelConstant(\[.*?\])?{(.*?)}{(.*?)}', re.DOTALL | re.MULTILINE
