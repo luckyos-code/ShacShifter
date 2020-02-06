@@ -35,11 +35,11 @@ class ShacShifter:
             writer = None
 
     # def __init__(self):
-    def shiftex(self, input, output, mapping):
+    def shiftex(self, input, output, mapping, ressourceIRI):
         """Transform biblatex def to shacl."""
         self.logger.debug('Start Shifting from {} into {}'.format(input, output))
         parser = BibLaTeXDefParser()
         parseResult = parser.parseDef(input)
         
-        writer = ShapeSerializer(parseResult, mapping, output)
+        writer = ShapeSerializer(parseResult, output, mapping, ressourceIRI)
         writer.write()
